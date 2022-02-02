@@ -1,38 +1,80 @@
 #include<iostream>
 #include<sys\stat.h>
 #include<dirent.h>
-#include<conio.h>
+#include <ctime>
+#include<vector>
 using namespace std;
 
-int main(int argc, const char *argv){
-    if(argc == 1){
-        cout<<"printing list of the dic";
-        struct dirent *d; //iterator to iterate in dic
-        struct stat dst; //struct finds is it a file or folder
-        DIR *dr; //object of DIR
-        string path = ".\\"; //path of where I am
 
-        dr = opendir(path.c_str()); //open directory in dir variable
-        if(dr !=NULL){
-            for(d = readdir(dr); d != NULL ; d = readdir(dr)){ //it returns the pointer of next directory entry
-                string type = d->d_name;   //store is it file or folder
-                type = path + type; //type means the complete path
-                if(stat(type.c_str(), &dst) == 0){
-                    if(dst.st_mode & S_IFDIR){
-                        type = "is a FOLDER";
-                    }
-                    else if (dst.st_mode & S_IFREG){
-                        type = "is a FILE";
-                    }
+
+void print(string path, string args){
+    struct dirent *d; //iterator to iterate through out the directory
+    struct stat dst; //structure of getting file details->type,size,file creation time,file modified time. it also has 
+    DIR *dir;
+    vector<string> arr; //created to find read-write permission
+    
+
+    dir = opendir(path.c_str());
+    if(dir !=NULL){
+        for(d = readdir(dir); d != NULL ; d = readdir(dir)){ //it returns the pointer of next directory entry
+            string type = d->d_name;
+            type = path + type;
+            if(stat(type.c_str(), &dst) == 0){
+                
+                if(dst.st_mode & S_IFDIR){
+                    type = "DIRECTORY: ";
                 }
-                cout<<d->d_name<<" "<<type<<endl;
+                else if (dst.st_mode & S_IFREG){
+                    type = "FILE     :";
+                }
+                
             }
-            closedir(dr);
+
+                mode_t modeSt = dst.st_mode;
+                cout<<modeSt<<endl;
+                arr.push_back((modeSt & S_IRUSR) ? "r" : "-");
+                arr.push_back((modeSt & S_IWUSR) ? "w" : "-");
+                arr.push_back((modeSt & S_IXUSR) ? "x" : "-");
+                arr.push_back("-");
+                arr.push_back((modeSt & S_IRGRP) ? "r" : "-");
+                arr.push_back((modeSt & S_IWGRP) ? "w" : "-");
+                arr.push_back((modeSt & S_IXGRP) ? "x" : "-");
+                arr.push_back("-");
+                arr.push_back((modeSt & S_IROTH) ? "r" : "-");
+                arr.push_back((modeSt & S_IWOTH) ? "w" : "-");
+                arr.push_back((modeSt & S_IXOTH) ? "x" : "-");
+
+                string temp = "";
+                for (auto it = arr.begin(); it != arr.end(); ++it)
+                    temp = temp + *it;
+            
+            if(args == "a" || args == "no"){
+                cout<<d->d_name<<endl;
+            }else if(args == "l"){
+                cout<<type<<" "<<temp<<" "<<"size: "<<dst.st_size<<"\t"<<"createTime: "<<std::ctime(&dst.st_ctime)<<"\t"<<"modifiedTime: "<<std::ctime(&dst.st_mtime)<<"\t"<<"name: "<<d->d_name<<endl;
+            }
+            arr.clear();
         }
-        else{
-            cout<<"dic null"<<endl;
+        closedir(dir);
+    }
+    else{
+        cout<<"directory not opening"<<endl;
+    }
+}
+
+int main(int argc, const char *argv[]){
+    string j="";
+    if(argc == 1){
+        j=".\\";
+        print(j,"no");
+    }
+    else if(argc==2){
+        print(j + argv[1],"a");
+    }
+    else if(argc == 3){
+        if((j + argv[1]) == "-l"){
+            print(j + argv[2],"l");
         }
     }
-    // if the argc > 1 that means it can be ls -a or ls -p so that will have specific work 
     return 0;
 }
