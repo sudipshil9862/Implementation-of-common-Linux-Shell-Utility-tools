@@ -31,7 +31,6 @@ void print(string path, string args){
             }
 
                 mode_t modeSt = dst.st_mode;
-                cout<<modeSt<<endl;
                 arr.push_back((modeSt & S_IRUSR) ? "r" : "-");
                 arr.push_back((modeSt & S_IWUSR) ? "w" : "-");
                 arr.push_back((modeSt & S_IXUSR) ? "x" : "-");
@@ -48,9 +47,9 @@ void print(string path, string args){
                 for (auto it = arr.begin(); it != arr.end(); ++it)
                     temp = temp + *it;
             
-            if(args == "a" || args == "no"){
+            if(args == "no details"){
                 cout<<d->d_name<<endl;
-            }else if(args == "l"){
+            }else if(args == "with details"){
                 cout<<type<<" "<<temp<<" "<<"size: "<<dst.st_size<<"\t"<<"createTime: "<<std::ctime(&dst.st_ctime)<<"\t"<<"modifiedTime: "<<std::ctime(&dst.st_mtime)<<"\t"<<"name: "<<d->d_name<<endl;
             }
             arr.clear();
@@ -66,14 +65,19 @@ int main(int argc, const char *argv[]){
     string j="";
     if(argc == 1){
         j=".\\";
-        print(j,"no");
+        print(j,"no details");
     }
     else if(argc==2){
-        print(j + argv[1],"a");
+        if((j + argv[1]) == "-l"){
+            print(".\\","with details");
+        }
+        else{
+            print(j + argv[1],"no details");
+        }
     }
     else if(argc == 3){
         if((j + argv[1]) == "-l"){
-            print(j + argv[2],"l");
+            print(j + argv[2],"with details");
         }
     }
     return 0;
