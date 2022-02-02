@@ -39,24 +39,24 @@ commands:-
 
 ls implementation
 -------------------
-in linux command-line:-
-one time compile:- g++ -o lsimp ls.cpp
-alias lsMine = "./lsimp"
-**execution command will become:-  lsMine
+In linux command-line:- one time compile:- g++ ls.cpp COMMAND- ./a.out (print all the folders and files in directory COMMAND- ./a.out -l (will print all file/folders with details-> type, size, creation time, modified time) COMMAND- ./a.out dir_name (will print all file/folders in a path) COMMAND- ./a.out -l dir_name (will print all file/folders in a path with details-> type, size, creation time, modified time)
 
 **procedure:-
-1. importing diret.h and sys\stat.h library
-2. making a pointer of a in built structure dirent to iterate in dic
-3. making stat structure to find the whether it is file or folder
-4. making object of DIR to open the directory
-5. taking the path as a string where I am located now
-6. opening directory
-7. error handling:- if directory is not opened then printing an error
-8. iterate through directory
-9. storing the file or folder's name and concatinate with the cuurent path
-10. check whether it is a file ot folder by the stat function(just for advance version)
-11. printing all the file or folder's name one by one along with type(file/foler)
-12. close the directory
+
+check how many arguments are there
+if arg count = 1 then it will print all files/folder in same location
+if arg count = 2 then (if 2nd arg= "-l" then it will print all files/folder with details in same location and if 2nd arg= any path then will print files/folder in that path)
+if arg count = 3 then will print all file/folders in a path with details
+this ls command is only supported by above commands.
+
+printing approach:
+
+iterate through directory
+checking whether its file or folder using stat structure in sys\stat.h library
+To print the file permission:- checking for user(r,w,x),Group(r,w,x),Other(r,w,x) and pushing back to string vector
+calculating the size, file creation time, file modified time
+closing the directory
+(This ls command in c++ will work for directories)
 
 cat implementation
 -------------------
