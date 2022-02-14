@@ -1,120 +1,84 @@
 #include<iostream>
-#include<fstream>
 #include<sys/stat.h>
 #include<dirent.h>
+#include <ctime>
+#include<vector>
 using namespace std;
 
 
-int main(int argc,char* argv[]){
-    if(argc != 3){
-        cout<<"error"<<endl;
-    }
-    else if(argc == 3){
-        struct stat st1;
-        struct stat st2;
-        stat(argv[1], &st1);
-        stat(argv[2], &st2);
 
-        //if both are file
-        if((st1.st_mode & S_IFREG) && (st2.st_mode & S_IFREG)){
-            ifstream myfile1(argv[1]);
-            ofstream myfile2(argv[2]);
-            chmod(argv[2], st1.st_mode); // copy file permission
-            string line;
-            while (getline(myfile1,line))
-            {
-                myfile2 << line;
-            }
-            
-        }
+void print(string path, string args){
+    struct dirent *d; //iterator to itqwerate through out the directory
+    struct stat dst; //structure of getting file details->type,size,file creation time,file modified time. it also has 
+    DIR *dir;
+    vector<string> arr; //created to find read-write permission
+    
 
-        //if 1st one is file and 2nd one is folder (file create and copy to folder)
-        else if((st1.st_mode & S_IFREG) && (st2.st_mode & S_IFDIR)){
-            ifstream myfile1(argv[1]);
-            string path = "";
-            for(int i=string(argv[1]).length(); i>0 ; i--){
-              if(string(argv[1])[i] != '/'){
-                path = string(argv[1])[i] + path;
-              }
-              else{
-                break;
-              }
-            }
-            ofstream myfile2(string(argv[2]) + string(path));
-            chmod(argv[2], st1.st_mode); // copy file permission
-            string line;
-            while (getline(myfile1,line))
-            {
-                myfile2 << line;
-            }
-        }
-
-
-        // if folder to folder
-        else if ((st1.st_mode & S_IFDIR) && (st2.st_mode & S_IFDIR)){
-            
-            // mkdir((string(argv[2]) + string(argv[1])));
-            // char* dirname = argv[2];
-            string dirname = string(argv[2]) + string(argv[1]);
-            mkdir(dirname.c_str(),0777);
-
-
-            struct stat st1;
-            struct stat st2;
-            stat(argv[1], &st1);
-            stat(argv[2], &st2);
-            chmod(argv[2], st1.st_mode); //copy folder permission to another
-
-            struct stat dst;
-            struct dirent *d;
-            DIR *dir;
-            dir = opendir(argv[1]);
-            for(d = readdir(dir); d != NULL ; d = readdir(dir)){
-                string type = d->d_name;
-                type = string(argv[1]) + type;
-                if(stat(type.c_str(), &dst) == 0){
-                    if(dst.st_mode & S_IFDIR){
-                        //type = "DIRECTORY: ";
-                        struct stat st5;
-                        stat(((string(argv[1]) + type).c_str()), &st5);
-                        mkdir((string(argv[2]) + string(argv[1]) + type).c_str(),0777);
-                        chmod(((string(argv[2]) + string(argv[1]) + type).c_str()), st5.st_mode);
-                        // copyDir(type3, (type2 + type3).c_str());
-
-                    }
-                    else if (dst.st_mode & S_IFREG){
-                        //type = "FILE     :";
-                        ifstream myfile1(type);
-                        string path2 = "";
-                        for(int i=string(type).length(); i>0 ; i--){
-                            if(string(type)[i] != '/'){
-                                path2 = string(type)[i] + path2;
-                            }
-                            else{
-                                break;
-                            }
-                        }
-                        ofstream myfile2(string(argv[2]) + string(argv[1]) + string(path2));
-                        chmod((string(argv[2]) + string(argv[1]) + path2).c_str(), dst.st_mode); // copy file permission
-                        string line;
-                        while (getline(myfile1,line))
-                        {
-                            myfile2 << line;
-                        }
-
-                    }
+    dir = opendir(path.c_str());
+    if(dir !=NULL){
+        for(d = readdir(dir); d != NULL ; d = readdir(dir)){ //it returns the pointer of next directory entry
+            string type = d->d_name;
+            type = path + type;
+            if(stat(type.c_str(), &dst) == 0){
+                
+                if(dst.st_mode & S_IFDIR){
+                    type = "DIRECTORY: ";
                 }
+                else if (dst.st_mode & S_IFREG){
+                    type = "FILE     :";
+                }
+                
             }
 
+                mode_t modeSt = dst.st_mode;
+                arr.push_back((modeSt & S_IRUSR) ? "r" : "-");
+                arr.push_back((modeSt & S_IWUSR) ? "w" : "-");
+                arr.push_back((modeSt & S_IXUSR) ? "x" : "-");
+                arr.push_back("-");
+                arr.push_back((modeSt & S_IRGRP) ? "r" : "-");
+                arr.push_back((modeSt & S_IWGRP) ? "w" : "-");
+                arr.push_back((modeSt & S_IXGRP) ? "x" : "-");
+                arr.push_back("-");
+                arr.push_back((modeSt & S_IROTH) ? "r" : "-");
+                arr.push_back((modeSt & S_IWOTH) ? "w" : "-");
+                arr.push_back((modeSt & S_IXOTH) ? "x" : "-");
 
+                string temp = "";
+                for (auto it = arr.begin(); it != arr.end(); ++it)
+                    temp = temp + *it;
+            
+            if(args == "no details"){
+                cout<<d->d_name<<endl;
+            }else if(args == "with details"){
+                cout<<type<<" "<<temp<<" "<<"size: "<<dst.st_size<<"\t"<<"createTime: "<<std::ctime(&dst.st_ctime)<<"\t"<<"modifiedTime: "<<std::ctime(&dst.st_mtime)<<"\t"<<"name: "<<d->d_name<<endl;
+            }
+            arr.clear();
         }
-
-
-        //if 1st one is folder and 2nd one is file error
-        else if ((st1.st_mode & S_IFDIR) && (st2.st_mode & S_IFREG)){
-            cout<<"error: 1st one is file and 2nd one is folder"<<endl;
-        }
+        closedir(dir);
     }
-
+    else{
+        cout<<"directory not opening"<<endl;
+    }
 }
 
+int main(int argc, const char *argv[]){
+    string j="";
+    if(argc == 1){
+        j=".\\";
+        print(j,"no details");
+    }
+    else if(argc==2){
+        if((j + argv[1]) == "-l"){
+            print(".\\","with details");
+        }
+        else{
+            print(j + argv[1],"no details");
+        }
+    }
+    else if(argc == 3){
+        if((j + argv[1]) == "-l"){
+            print(j + argv[2],"with details");
+        }
+    }
+    return 0;
+}
